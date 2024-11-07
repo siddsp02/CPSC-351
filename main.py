@@ -56,7 +56,7 @@ class TuringMachine:
     tape: Tape = field(init=False, default_factory=Tape)
 
     def __post_init__(self) -> None:
-        if not self.tape_alphabet | {"⊔"} <= self.input_alphabet:
+        if not self.tape_alphabet >= self.input_alphabet | {"⊔"}:
             raise ValueError("Tape alphabet must include the blank symbol.")
 
     def walk(
@@ -149,7 +149,7 @@ def main() -> None:
         transitions=anbn,  # type: ignore
         start_state="q0",
     )
-    tm.print_configurations("aaabbb", skip_reads=True)
+    tm.print_configurations("aaabbb")
 
 
 if __name__ == "__main__":
