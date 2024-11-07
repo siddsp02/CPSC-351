@@ -106,9 +106,8 @@ class TuringMachine:
 
             # Skip instructions/configurations where cells effectively aren't
             # changed, and the tape head just moves one cell to the left/right.
-            if skip_reads:
-                if read_symbol == write_symbol:
-                    continue
+            if skip_reads and read_symbol == write_symbol:
+                continue
 
             print(
                 (left if left else "⊔"),
