@@ -4,7 +4,7 @@ from functools import reduce
 from itertools import accumulate, chain, islice, repeat, starmap, tee
 from typing import Any, Generator, Iterable, Iterator, Literal
 
-from data import anbn
+from src.data import anbn
 
 Direction = Literal[-1, 0, 1]
 TuringTransition = tuple[str, Direction, str]
