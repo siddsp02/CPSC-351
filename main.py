@@ -1,7 +1,8 @@
+from copy import deepcopy
 from dataclasses import dataclass, field
 from functools import reduce
-from itertools import accumulate, chain, islice, repeat
-from typing import Generator, Iterable, Iterator, Literal
+from itertools import accumulate, chain, islice, repeat, tee
+from typing import Any, Generator, Iterable, Iterator, Literal
 
 from data import anbn
 
@@ -11,6 +12,12 @@ TuringTransitionTable = dict[str, dict[str, tuple[str, Direction, str]]]
 DFATransitionTable = dict[str, dict[str, str]]
 
 
+def partition(it: Iterable[Any], i: int) -> tuple[Iterable[Any], Iterable[Any]]:
+    "Partition an iterable at an index `i`."
+    it1, it2 = tee(deepcopy(it))
+    return islice(it1, 0, i, 1), islice(it2, i, None, 1)
+
+
 class Tape:
     """Class for the tape of a Turing machine. Since the tape is infinite,
     indices have to be a non-negative integer since negative indexing
@@ -18,10 +25,34 @@ class Tape:
     """
 
     def __init__(self, string: str = "") -> None:
+        self.cursor = 0
         self.cells = ["⊔"] if not string else list(string)
+
+    @property
+    def cursor(self) -> int:
+        return self._cursor
+
+    @cursor.setter
+    def cursor(self, i: int) -> None:
+        self._cursor = max(0, i)
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self.cells})"
+
+    def peek(self) -> str:
+        return self[self.cursor]
+
+    def shift(self, direction: Literal[-1, 0, 1]) -> None:
+        self.cursor += direction
+
+    def mark(self, symbol: str) -> None:
+        if len(symbol) != 1:
+            raise ValueError("Can only mark one character at a time.")
+        self[self.cursor] = symbol
+
+    def write(self, symbol: str, shift: Literal[-1, 0, 1] = 1) -> None:
+        self.mark(symbol)
+        self.shift(shift)
 
     def __str__(self) -> str:
         return "".join(self.cells) + "..."
@@ -42,7 +73,11 @@ class Tape:
 
     def __iter__(self) -> Iterator[str]:
         "Iterates through the contents of the tape cells. Note that this is an infinite iterator."
-        yield from chain(self.cells, repeat("⊔"))
+        return chain(self.cells, repeat("⊔"))
+
+    def iter_cells(self) -> Iterator[str]:
+        "Iterates only through the actual written cells of the tape."
+        return iter(self.cells)
 
 
 @dataclass
@@ -59,6 +94,14 @@ class TuringMachine:
         if not self.tape_alphabet >= self.input_alphabet | {"⊔"}:
             raise ValueError("Tape alphabet must include the blank symbol.")
 
+    @property
+    def head(self) -> int:
+        return self.tape.cursor
+
+    @property
+    def halting_states(self) -> set[str]:
+        return self.accepting_states | self.rejecting_states
+
     def walk(
         self, string: str
     ) -> Generator[tuple[str, TuringTransition], None, tuple[Tape, str]]:
@@ -68,17 +111,19 @@ class TuringMachine:
         input string.
         """
         self.tape = Tape(string)
-        i, state = 0, self.start_state
-        halting_states = self.accepting_states | self.rejecting_states
+        state = self.start_state
 
-        while state not in halting_states:
-            read_symbol = self.tape[i]
+        while True:
+            read_symbol = self.tape.peek()
             write_symbol, direction, next_state = self.transitions[state][read_symbol]
+
             yield read_symbol, (write_symbol, direction, next_state)
-            self.tape[i] = write_symbol
-            # If transition direction reads left and tape head
-            # is at the leftmost cell, stay.
-            i = max(i + direction, 0)
+
+            self.tape.write(write_symbol, direction)
+
+            if state in self.halting_states:
+                break
+
             state = next_state
 
         tape, self.tape = self.tape, Tape()
@@ -93,34 +138,33 @@ class TuringMachine:
             except StopIteration as e:
                 return e.value
 
-    def print_configurations(self, string: str, skip_reads: bool = False) -> None:
+    def print_configurations(
+        self, string: str, /, fmt: str = "{!r} {} {!r}", skip_reads: bool = False
+    ) -> None:
         """Prints the sequence of Turing machine configurations when the instance
         runs on a given input string.
         """
-        i = 0
         state = self.start_state
         for step in self.walk(string):
-            read_symbol, (write_symbol, direction, next_state) = step
-            left = "".join(x for x in islice(self.tape, 0, i, 1))
-            it = islice(self.tape, i, None, 1)
+            read_symbol, (write_symbol, _, next_state) = step
 
             # Skip instructions/configurations where cells effectively aren't
             # changed, and the tape head just moves one cell to the left/right.
             if skip_reads and read_symbol == write_symbol:
                 continue
 
-            print(
-                (left if left else "⊔"),
-                f" {state} ",
-                "".join(x for x in iter(lambda: next(it), "⊔")) + "⊔",
-                end="",
-                sep="",
-            )
-            if state not in self.accepting_states | self.rejecting_states:
+            left, right = partition(self.tape.iter_cells(), self.head)
+
+            left = "".join(left)
+            left = left if left else "⊔"
+            right = "".join(right)
+            right = right if right else "⊔"
+
+            print(fmt.format(left, state, right), end="")
+            if state not in self.halting_states:
                 print(" ⊢", end=" ")
 
             state = next_state
-            i += direction
         print()
 
 
