@@ -4,7 +4,7 @@ from functools import reduce
 from itertools import accumulate, chain, islice, repeat, starmap, tee
 from typing import Any, Generator, Iterable, Iterator, Literal
 
-from data import anbn, dfa
+from data import anbn
 
 Direction = Literal[-1, 0, 1]
 TuringTransition = tuple[str, Direction, str]
@@ -20,8 +20,12 @@ def partition(it: Iterable[Any], i: int) -> tuple[Iterable[Any], Iterable[Any]]:
 
 def to_tm_string(it: Iterable[str]) -> str:
     ret = "".join(it)
-    ret = ret if ret else "⊔"
-    return ret
+    return ret if ret else "⊔"
+
+
+def to_dfa_string(it: Iterable[str]) -> str:
+    ret = "".join(it)
+    return ret if ret else "λ"
 
 
 def walk_dfa(string: str, transitions: DFATransitionTable, start: str) -> Iterator[str]:
@@ -54,6 +58,12 @@ class DFA:
 
     def execute(self, string: str) -> str:
         return execute_dfa(string, self.transitions, self.start)
+
+    def accepts(self, string: str) -> bool:
+        return self.execute(string) in self.accepting_states
+
+    def rejects(self, string: str) -> bool:
+        return not self.accepts(string)
 
 
 class Tape:
@@ -177,6 +187,10 @@ class TuringMachine:
             except StopIteration as e:
                 return e.value
 
+    @property
+    def current_symbol(self) -> str:
+        return self.tape[self.head]
+
     def accepts(self, string: str) -> bool:
         _, state = self.execute(string)
         return state in self.accepting_states
@@ -220,7 +234,7 @@ def main() -> None:
         transitions=anbn,  # type: ignore
         start_state="q0",
     )
-    print(tm.accepts("aaaababb"))
+    tm.print_configurations("aabb")
 
 
 if __name__ == "__main__":
