@@ -1,10 +1,10 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
 from functools import reduce
-from itertools import accumulate, chain, islice, repeat, tee
+from itertools import accumulate, chain, islice, repeat, starmap, tee
 from typing import Any, Generator, Iterable, Iterator, Literal
 
-from data import anbn
+from data import anbn, dfa
 
 Direction = Literal[-1, 0, 1]
 TuringTransition = tuple[str, Direction, str]
@@ -18,6 +18,44 @@ def partition(it: Iterable[Any], i: int) -> tuple[Iterable[Any], Iterable[Any]]:
     return islice(it1, 0, i, 1), islice(it2, i, None, 1)
 
 
+def to_tm_string(it: Iterable[str]) -> str:
+    ret = "".join(it)
+    ret = ret if ret else "⊔"
+    return ret
+
+
+def walk_dfa(string: str, transitions: DFATransitionTable, start: str) -> Iterator[str]:
+    """Walks through the steps of computation for a DFA
+    when given an input string and transitions.
+    """
+    return accumulate(string, lambda x, y: transitions[x][y], initial=start)
+
+
+def execute_dfa(string: str, transitions: DFATransitionTable, start: str) -> str:
+    """Takes an input string and returns the final state
+    when given the starting state and transitions.
+    """
+    return reduce(lambda x, y: transitions[x][y], string, start)
+
+
+@dataclass
+class DFA:
+    alphabet: set[str]
+    transitions: DFATransitionTable
+    accepting_states: set[str]
+    start: str
+    states: set[str] = field(init=False)
+
+    def __post_init__(self) -> None:
+        self.states = set(self.transitions)
+
+    def walk(self, string: str) -> Iterator[str]:
+        return walk_dfa(string, self.transitions, self.start)
+
+    def execute(self, string: str) -> str:
+        return execute_dfa(string, self.transitions, self.start)
+
+
 class Tape:
     """Class for the tape of a Turing machine. Since the tape is infinite,
     indices have to be a non-negative integer since negative indexing
@@ -26,7 +64,7 @@ class Tape:
 
     def __init__(self, string: str = "") -> None:
         self.cursor = 0
-        self.cells = ["⊔"] if not string else list(string)
+        self.cells = list(to_tm_string(string))
 
     @property
     def cursor(self) -> int:
@@ -42,7 +80,9 @@ class Tape:
     def peek(self) -> str:
         return self[self.cursor]
 
-    def shift(self, direction: Literal[-1, 0, 1]) -> None:
+    def shift(self, direction: Direction) -> None:
+        if direction not in {-1, 0, 1}:
+            raise ValueError(f"direction can only be -1, 0, or 1, and not {direction}.")
         self.cursor += direction
 
     def mark(self, symbol: str) -> None:
@@ -50,7 +90,7 @@ class Tape:
             raise ValueError("Can only mark one character at a time.")
         self[self.cursor] = symbol
 
-    def write(self, symbol: str, shift: Literal[-1, 0, 1] = 1) -> None:
+    def write(self, symbol: str, shift: Direction = 1) -> None:
         self.mark(symbol)
         self.shift(shift)
 
@@ -120,7 +160,6 @@ class TuringMachine:
             yield read_symbol, (write_symbol, direction, next_state)
 
             self.tape.write(write_symbol, direction)
-
             if state in self.halting_states:
                 break
 
@@ -138,48 +177,36 @@ class TuringMachine:
             except StopIteration as e:
                 return e.value
 
-    def print_configurations(
-        self, string: str, /, fmt: str = "{!r} {} {!r}", skip_reads: bool = False
-    ) -> None:
-        """Prints the sequence of Turing machine configurations when the instance
-        runs on a given input string.
+    def accepts(self, string: str) -> bool:
+        _, state = self.execute(string)
+        return state in self.accepting_states
+
+    def rejects(self, string: str) -> bool:
+        _, state = self.execute(string)
+        return state in self.rejecting_states
+
+    def get_state_configurations(self, string: str) -> Iterator[tuple[str, str, str]]:
+        """Iterates over the state configurations of the Turing machine
+        when it's given an input string/tape to process.
         """
         state = self.start_state
         for step in self.walk(string):
-            read_symbol, (write_symbol, _, next_state) = step
-
-            # Skip instructions/configurations where cells effectively aren't
-            # changed, and the tape head just moves one cell to the left/right.
-            if skip_reads and read_symbol == write_symbol:
-                continue
+            _, (*_, next_state) = step
 
             left, right = partition(self.tape.iter_cells(), self.head)
 
-            left = "".join(left)
-            left = left if left else "⊔"
-            right = "".join(right)
-            right = right if right else "⊔"
+            left = to_tm_string(left)
+            right = to_tm_string(right)
 
-            print(fmt.format(left, state, right), end="")
-            if state not in self.halting_states:
-                print(" ⊢", end=" ")
+            yield left, state, right
 
             state = next_state
-        print()
 
-
-def walk_dfa(string: str, transitions: DFATransitionTable, start: str) -> Iterable[str]:
-    """Walks through the steps of computation for a DFA
-    when given an input string and transitions.
-    """
-    return accumulate(string, lambda x, y: transitions[x][y], initial=start)
-
-
-def execute_dfa(string: str, transitions: DFATransitionTable, start: str) -> str:
-    """Takes an input string and returns the final state
-    when given the starting state and transitions.
-    """
-    return reduce(lambda x, y: transitions[x][y], string, start)
+    def print_configurations(self, string: str, /, fmt: str = "{!r} {} {!r}") -> None:
+        """Prints the sequence of Turing machine configurations when the instance
+        runs on a given input string.
+        """
+        print(" ⊢ ".join(starmap(fmt.format, self.get_state_configurations(string))))
 
 
 def main() -> None:
@@ -193,7 +220,7 @@ def main() -> None:
         transitions=anbn,  # type: ignore
         start_state="q0",
     )
-    tm.print_configurations("aaabbb")
+    print(tm.accepts("aaaababb"))
 
 
 if __name__ == "__main__":
