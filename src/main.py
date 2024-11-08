@@ -28,20 +28,6 @@ def to_dfa_string(it: Iterable[str]) -> str:
     return ret if ret else "λ"
 
 
-def walk_dfa(string: str, transitions: DFATransitionTable, start: str) -> Iterator[str]:
-    """Walks through the steps of computation for a DFA
-    when given an input string and transitions.
-    """
-    return accumulate(string, lambda x, y: transitions[x][y], initial=start)
-
-
-def execute_dfa(string: str, transitions: DFATransitionTable, start: str) -> str:
-    """Takes an input string and returns the final state
-    when given the starting state and transitions.
-    """
-    return reduce(lambda x, y: transitions[x][y], string, start)
-
-
 @dataclass
 class DFA:
     alphabet: set[str]
@@ -54,10 +40,18 @@ class DFA:
         self.states = set(self.transitions)
 
     def walk(self, string: str) -> Iterator[str]:
-        return walk_dfa(string, self.transitions, self.start)
+        """Walks through the steps of computation for a DFA
+        when given an input string and transitions.
+        """
+        return accumulate(
+            string, lambda x, y: self.transitions[x][y], initial=self.start
+        )
 
     def execute(self, string: str) -> str:
-        return execute_dfa(string, self.transitions, self.start)
+        """Takes an input string and returns the final state
+        when given the starting state and transitions.
+        """
+        return reduce(lambda x, y: self.transitions[x][y], string, self.start)
 
     def accepts(self, string: str) -> bool:
         return self.execute(string) in self.accepting_states
@@ -206,14 +200,12 @@ class TuringMachine:
         state = self.start_state
         for step in self.walk(string):
             _, (*_, next_state) = step
-
             left, right = partition(self.tape.iter_cells(), self.head)
 
             left = to_tm_string(left)
             right = to_tm_string(right)
 
             yield left, state, right
-
             state = next_state
 
     def print_configurations(self, string: str, /, fmt: str = "{!r} {} {!r}") -> None:
