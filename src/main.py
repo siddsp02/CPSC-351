@@ -2,8 +2,7 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from functools import reduce
 from itertools import accumulate, chain, islice, repeat, starmap, tee
-from pprint import pprint
-from typing import Any, Generator, Iterable, Iterator, Literal, Self, cast
+from typing import Any, Generator, Iterable, Iterator, Literal, Self
 
 from data import R, anbn
 
