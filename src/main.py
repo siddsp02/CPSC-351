@@ -2,9 +2,10 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from functools import reduce
 from itertools import accumulate, chain, islice, repeat, starmap, tee
-from typing import Any, Generator, Iterable, Iterator, Literal
+from pprint import pprint
+from typing import Any, Generator, Iterable, Iterator, Literal, Self, cast
 
-from src.data import anbn
+from data import R, anbn
 
 Direction = Literal[-1, 0, 1]
 TuringTransition = tuple[str, Direction, str]
@@ -145,6 +146,24 @@ class TuringMachine:
     @property
     def halting_states(self) -> set[str]:
         return self.accepting_states | self.rejecting_states
+
+    @classmethod
+    def from_dfa(cls, dfa: DFA) -> Self:
+        # This constructor/method still needs some fixing.
+        reject = "qr"
+        transitions = {
+            state: {"⊔": ("⊔", R, reject)}
+            | {symb: (symb, R, state) for symb in dfa.transitions[state]}
+            for state in dfa.transitions
+        }
+        return cls(
+            rejecting_states={reject},
+            accepting_states=dfa.accepting_states,
+            tape_alphabet=dfa.alphabet | {"⊔"},
+            input_alphabet=dfa.alphabet,
+            transitions=transitions,  # type: ignore
+            start_state=dfa.start,
+        )
 
     def walk(
         self, string: str
