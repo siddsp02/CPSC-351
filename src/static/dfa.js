@@ -4,12 +4,12 @@ let states = Number(stateInput.value);
 const symbolInput = document.getElementById("symbol-input");
 let symbols = Number(symbolInput.value);
 
-stateInput.addEventListener("input", e => {
+stateInput.addEventListener("input", (e) => {
     states = Number(e.target.value);
     createTable(states, symbols);
 });
 
-symbolInput.addEventListener("input", e => {
+symbolInput.addEventListener("input", (e) => {
     symbols = Number(e.target.value);
     createTable(states, symbols);
 });
@@ -55,7 +55,23 @@ const submitForm = async (event) => {
     event.preventDefault();
     const arr = getTableValues();
     const transitionTable = arrayToTransitionTable(arr);
-    console.log("transitions: ", transitionTable);
+    try {
+        const response = await fetch("/submit", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(transitionTable)
+        });
+        if (response.ok) {
+            const result = await response.json();
+            console.log("Response:", result);
+        } else {
+            console.error("Error submitting form:", response.statusText);
+        }
+    } catch (error) {
+        console.error(error);
+    }
 };
 
 const getTableValues = () => {
@@ -75,4 +91,3 @@ const getTableValues = () => {
     }
     return values;
 }
-
