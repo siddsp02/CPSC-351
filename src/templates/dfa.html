@@ -11,10 +11,12 @@
 <body>
     <form method="POST" id="myForm" onsubmit="submitForm(event)">
         {{ form.hidden_tag() }}
-        <label>{{ form.states.label }}</label>
-        {{ form.states(id="state-input") }}
-        <label>{{ form.symbols.label }}</label>
-        {{ form.symbols(id="symbol-input") }}
+        <fieldset>
+            <label>{{ form.states.label }}</label>
+            {{ form.states(id="state-input") }}
+            <label>{{ form.symbols.label }}</label>
+            {{ form.symbols(id="symbol-input") }}
+        </fieldset>
         {{ form.submit() }}
         <table id="table">
         </table>
