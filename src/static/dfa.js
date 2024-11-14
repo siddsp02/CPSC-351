@@ -10,7 +10,6 @@ stateInput.addEventListener("input", e => {
 });
 
 symbolInput.addEventListener("input", e => {
-    symbols = Number(symbolInput.value);
     symbols = Number(e.target.value);
     createTable(states, symbols);
 });
@@ -39,7 +38,6 @@ const createTable = (states, symbols) => {
 
 const arrayToTransitionTable = (arr) => {
     const asciiLowerCaseLetters = 'abcdefghijklmnopqrstuvwxyz'.split('');
-
     const transitionTable = {};
     for (let i = 0; i < arr.length; ++i) {
         transitionTable[`q${i}`] = {};
@@ -48,7 +46,6 @@ const arrayToTransitionTable = (arr) => {
             transitionTable[`q${i}`][symbol] = arr[i][j];
         }
     }
-
     return transitionTable;
 }
 
