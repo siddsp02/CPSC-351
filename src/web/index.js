@@ -61,6 +61,10 @@ const submitForm = async (event) => {
 
   const arr = getTableValues();
   console.log("🚀 ~ submitForm ~ arr:", arr);
+
+  // TODO: convert into json format described in data.py
+  // TODO: create endpoint in flask and send back information from flask
+
   // Send data as a POST request
   //   try {
   //       const response = await fetch('/submit', {
