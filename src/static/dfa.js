@@ -37,13 +37,14 @@ const createTable = (states, symbols) => {
 }
 
 const arrayToTransitionTable = (arr) => {
-    const asciiLowerCaseLetters = 'abcdefghijklmnopqrstuvwxyz'.split('');
+    const asciiLowerCaseLetters = "abcdefghijklmnopqrstuvwxyz";
     const transitionTable = {};
     for (let i = 0; i < arr.length; ++i) {
-        transitionTable[`q${i}`] = {};
+        const state = `q${i}`;
+        transitionTable[state] = {};
         for (let j = 0; j < arr[i].length; ++j) {
             const symbol = asciiLowerCaseLetters[j];
-            transitionTable[`q${i}`][symbol] = arr[i][j];
+            transitionTable[state][symbol] = arr[i][j];
         }
     }
     return transitionTable;
