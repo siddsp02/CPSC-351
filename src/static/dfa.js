@@ -45,7 +45,7 @@ const arrayToTransitionTable = (arr) => {
         transitionTable[`q${i}`] = {};
         for (let j = 0; j < arr[i].length; ++j) {
             const symbol = asciiLowerCaseLetters[j];
-            transitionTable[`q<sub>${i}</sub>`][symbol] = arr[i][j];
+            transitionTable[`q${i}`][symbol] = arr[i][j];
         }
     }
 
