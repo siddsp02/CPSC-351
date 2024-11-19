@@ -12,12 +12,12 @@ The client will do form validation and then send data to the server using JSON.
 
 ## Sequence of Events
 1. User inputs values into initial form
-  - These will be validated using HTML and Javascript
+    - These will be validated using HTML and Javascript
 2. If Validation succeeds:
-  - Render graph in D3.js
-  - Send data so that server has session storage of automata
+    - Render graph in D3.js
+    - Send data so that server has session storage of automata
 3. If Validation Fails:
-  - Show user invalid inputs and let them try again
+    - Show user invalid inputs and let them try again
 
 **Graph is rendered now**
 
