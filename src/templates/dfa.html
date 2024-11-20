@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script defer src="{{ url_for('static', filename='dfa.js') }}"></script>
+    <title>DFA Design</title>
+</head>
+
+<body>
+    <form method="POST" id="myForm" onsubmit="submitForm(event)">
+        {{ form.hidden_tag() }}
+        <fieldset>
+            {{ form.states.label }}
+            {{ form.states(id="state-input") }}
+            {{ form.symbols.label }}
+            {{ form.symbols(id="symbol-input") }}
+            <table id="table">
+            </table>
+            {{ form.submit }}
+        </fieldset>
+    </form>
+    <div id="response"></div>
+</body>
+
+</html>
