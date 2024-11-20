@@ -56,7 +56,7 @@ const submitForm = async (event) => {
     const arr = getTableValues();
     const transitionTable = arrayToTransitionTable(arr);
     try {
-        const response = await fetch("/submit", {
+        const response = await fetch("/", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -64,8 +64,11 @@ const submitForm = async (event) => {
             body: JSON.stringify(transitionTable)
         });
         if (response.ok) {
-            const result = await response.json();
+            const result = await response.text();
             console.log("Response:", result);
+            // const result = await response.json();
+            const responseDiv = document.getElementById("response");
+            responseDiv.innerHTML = result
         } else {
             console.error("Error submitting form:", response.statusText);
         }

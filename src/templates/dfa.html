@@ -12,15 +12,16 @@
     <form method="POST" id="myForm" onsubmit="submitForm(event)">
         {{ form.hidden_tag() }}
         <fieldset>
-            <label>{{ form.states.label }}</label>
+            {{ form.states.label }}
             {{ form.states(id="state-input") }}
-            <label>{{ form.symbols.label }}</label>
+            {{ form.symbols.label }}
             {{ form.symbols(id="symbol-input") }}
+            <table id="table">
+            </table>
+            {{ form.submit }}
         </fieldset>
-        {{ form.submit() }}
-        <table id="table">
-        </table>
     </form>
+    <div id="response"></div>
 </body>
 
 </html>
