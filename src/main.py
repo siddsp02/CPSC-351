@@ -1,7 +1,7 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
 from functools import reduce
-from itertools import accumulate, chain, islice, repeat, starmap, tee
+from itertools import accumulate, chain, islice, repeat, tee
 from typing import Any, Generator, Iterable, Iterator, Literal, Self
 
 from data import R, anbn
@@ -230,7 +230,10 @@ class TuringMachine:
         """Prints the sequence of Turing machine configurations when the instance
         runs on a given input string.
         """
-        print(" ⊢ ".join(starmap(fmt.format, self.get_state_configurations(string))))
+        for i, configuration in enumerate(self.get_state_configurations(string)):
+            if i != 0:
+                print(" ⊢ ", end="")
+            print(fmt.format(*configuration), end="")
 
 
 def main() -> None:
